@@ -12,7 +12,7 @@ services:
     - 63000:8000
     - 587:587
     env_file:
-    - .env.example
+    - .env
     networks:
     - platform
     extra_hosts:
