@@ -26,8 +26,8 @@ class MeetingInfo(BaseModel):
 class CheckInfo(BaseModel):
     username: str = ""
     meetingName: str = ""
-    meetingStartTime: str = ""
-    meetingEndTime: str = ""
+    meetingStartTime: datetime
+    meetingEndTime: datetime
     meetingAddress: str = ""
     checkReason: str = ""
     isPassed: int = -1
@@ -41,9 +41,10 @@ class UserMeetInfo(BaseModel):
 
 
 class UserMeetingInfo(BaseModel):
-    meetingId: int = 0
+    meetId: int = 0
     meeting_name: str = ""
-    description: str = ""
+    reason: str = ""
     startTime: datetime
     endTime: datetime
     username: list = []
+    is_passed: int

@@ -99,13 +99,13 @@ async def meeting_checklist(response: Response):
     """获取审核列表"""
     checkList = []
     with SessionLocal() as sess:
-        checks = (
-            sess.query(IsCaptured)
-            .join(User, User.userId == IsCaptured.userId)
-            .join(Meeting, Meeting.meetingId == IsCaptured.meetingId)
-            .all()
+        sql = text(
+            "select * from is_captured \
+            join users on is_captured.userId=users.userId \
+            join meetings on is_captured.meetingId=meetings.meetingId"
         )
-    if checks is None:
+        checks = sess.execute(sql).fetchall()
+    if checks == []:
         return return_status(Error.CheckNotExist, response)
     for check in checks:
         check1 = CheckInfo(
@@ -165,7 +165,7 @@ async def apply_meeting(
         return return_status(Error.MeetingRoomIsCaptured, response)
     # redis记录参与会议的人名
     try:
-        redis_db.sadd(f"meeting:{IsCaptured.CapturedId}", user.username)
+        redis_db.sadd(f"meeting:{captured.CapturedId}", user.username)
     except Exception:
         return return_status(Error.RedisError, response)
     # 返回captureId
@@ -174,7 +174,7 @@ async def apply_meeting(
     )
 
 
-@meetRouter.get("/{meetid}", dependencies=[AuthedUser(admin=False)])
+@meetRouter.get("/{meetId}", dependencies=[AuthedUser(admin=False)])
 async def meeting_info(response: Response, *, meetId: int = Path()):
     """获取会议室信息"""
     with SessionLocal() as sess:
@@ -182,44 +182,6 @@ async def meeting_info(response: Response, *, meetId: int = Path()):
     if room is None:
         return return_status(Error.MeetingNotExist, response)
     return room
-
-
-@meetRouter.get(
-    "/meet_list",
-    response_model=UserMeetResponse,
-    dependencies=[AuthedUser(admin=False)],
-)
-async def meet_list(response: Response):
-    """获取会议室列表"""
-    m_li = []
-
-    # 获取当前所有会议室
-    with SessionLocal() as sess:
-        rooms = sess.query(Meeting).all()
-    for room in rooms:
-        # 判断当前时间
-        with SessionLocal() as sess:
-            meet_status = (
-                sess.query(IsCaptured)
-                .filter_by(meetingId=room.meetingId)
-                .filter(IsCaptured.StartTime < datetime.now())
-                .filter(IsCaptured.EndTime > datetime.now())
-                .filter(IsCaptured.isPass == 1)
-                .all()
-            )
-        is_ok = True
-        if meet_status is not []:
-            is_ok = False
-        m_li.append(
-            UserMeetInfo(
-                meetingId=room.meetingId,
-                name=room.name,
-                isCaptured=is_ok,
-            )
-        )
-    return return_response(
-        UserMeetResponse(MeetList=m_li, status=Error.NoError), response
-    )
 
 
 @meetRouter.get("/join/{IsCapturedId}")
@@ -243,7 +205,7 @@ async def join_meeting(
         return return_status(Error.MeetingIsStarted, response)
     # redis记录参与会议的人名
     try:
-        redis_db.sadd(f"meeting:{IsCaptured.CapturedId}", user.username)
+        redis_db.sadd(f"meeting:{IsCapturedId}", user.username)
     except Exception:
         return return_status(Error.RedisError, response)
 
@@ -252,13 +214,9 @@ async def join_meeting(
 async def meetings_info(response: Response, *, user: User = AuthedUser(admin=False)):
     """获取该会议信息"""
     with SessionLocal() as sess:
-        captures = (
-            sess.query(IsCaptured)
-            .filter_by(userId=user.userId)
-            .filter_by(isPass=1)
-            .all()
-        )
-    if captures is []:
+        sql = text("select * from is_captured where userId=:id")
+        captures = sess.execute(sql, dict(id=user.userId)).fetchall()
+    if captures == []:
         return return_status(Error.RecordNotFound, response)
     meet_list = []
     for capture in captures:
@@ -266,14 +224,51 @@ async def meetings_info(response: Response, *, user: User = AuthedUser(admin=Fal
             room = sess.query(Meeting).filter_by(meetingId=capture.meetingId).first()
         meet_list.append(
             UserMeetingInfo(
-                meetingId=capture.CapturedId,
+                meetId=capture.CapturedId,
                 meeting_name=room.name,
-                description=capture.summary,
+                reason=capture.reason,
                 startTime=capture.StartTime,
                 endTime=capture.EndTime,
-                username=redis_db.smembers(f"meeting:{capture.CapturedId}"),
+                username=list(redis_db.smembers(f"meeting:{capture.CapturedId}")),
+                is_passed=capture.isPass,
             )
         )
     return return_response(
-        UserMeetingResponse(MeetList=meet_list, status=Error.NoError), response
+        UserMeetingResponse(meetList=meet_list, status=Error.NoError), response
+    )
+
+
+@meetRouter.get(
+    "/meetings/list",
+    response_model=UserMeetResponse,
+    dependencies=[AuthedUser(admin=False)],
+)
+async def meetings_list(response: Response):
+    """获取会议室列表"""
+    m_li = []
+
+    # 获取当前所有会议室
+    with SessionLocal() as sess:
+        rooms = sess.query(Meeting).all()
+    for room in rooms:
+        # 判断当前时间
+        with SessionLocal() as sess:
+            sql = text(
+                "select * from is_captured where meetingId=:id and StartTime<:end and EndTime>:start and isPass=1"
+            )
+            meet_status = sess.execute(
+                sql, dict(id=room.meetingId, start=datetime.now(), end=datetime.now())
+            ).first()
+        is_ok = False
+        if meet_status is not None:
+            is_ok = True
+        m_li.append(
+            UserMeetInfo(
+                meetingId=room.meetingId,
+                name=room.name,
+                isCaptured=is_ok,
+            )
+        )
+    return return_response(
+        UserMeetResponse(meetList=m_li, status=Error.NoError), response
     )

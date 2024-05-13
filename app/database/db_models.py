@@ -1,6 +1,6 @@
 """数据库实例化"""
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
 
 from app.constants import WAITING
 from app.database.db import Base
@@ -45,9 +45,6 @@ class IsCaptured(Base):
     # 人数
     number = Column(Integer, nullable=False)
     # 审核
-    isPass = Column(Boolean, nullable=False, default=WAITING)
+    isPass = Column(Integer, nullable=False, default=WAITING)
     reason = Column(String(256), nullable=False, default=" ")
-    # 简介
-    summary = Column(Text(), nullable=False)
-
     __table_args__ = {"mysql_charset": "utf8mb4"}
