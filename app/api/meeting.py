@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Body, Path, Response
+from sqlalchemy import text
 
 from app.constants import Error
 from app.data import common as common_data
@@ -142,15 +143,14 @@ async def apply_meeting(
         return return_status(Error.MeetingNotExist, response)
     # 确认该会议室在该时间段是否被预约
     with SessionLocal() as sess:
-        is_replied = (
-            sess.query(IsCaptured)
-            .filter_by(meetingId=meetId)
-            .filter(IsCaptured.StartTime < request.EndTime)
-            .filter(IsCaptured.EndTime > request.StartTime)
-            .all()
-        )
-    if not is_replied:
-        return return_status(Error.MeetingRoomIsCaptured, response)
+        is_replied = sess.execute(
+            text(
+                "select * from is_captured where meetingId=:id and StartTime<:end and EndTime>:start"
+            ),
+            dict(id=meetId, start=request.StartTime, end=request.EndTime),
+        ).first()
+        if is_replied is not None:
+            return return_status(Error.MeetingRoomIsCaptured, response)
     # 添加预约记录
     captured = IsCaptured(
         userId=user.userId,
