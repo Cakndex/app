@@ -1,5 +1,4 @@
-"""一些常量
-"""
+"""一些常量"""
 
 from enum import IntEnum
 
@@ -36,7 +35,12 @@ class Error(IntEnum):
     RecordNotFound = 28
     DeleteError = 29
     # ...
+    MeetingRoomIsCaptured = 31
+    RedisError = 32
+    # ...
     IllegalQQID = 26
+    MeetingIsNotPassed = 33
+    MeetingIsStarted = 35
 
 
 # 错误HTTP状态码名称

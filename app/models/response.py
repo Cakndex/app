@@ -1,11 +1,12 @@
 """
 响应模型
 """
+
 from typing import List
 
 from pydantic import BaseModel
 
-from app.models.schema import UserInfo, MeetingInfo, CheckInfo
+from app.models.schema import CheckInfo, UserInfo, UserMeetInfo, UserMeetingInfo
 
 
 class Status(BaseModel):
@@ -48,3 +49,15 @@ class MeetingResponse(Status):
 
 class CheckResponse(Status):
     Checklist: List[CheckInfo] = []
+
+
+class CreateCheckResponse(Status):
+    CheckId: int = 0
+
+
+class UserMeetResponse(Status):
+    meetList: List[UserMeetInfo] = []
+
+
+class UserMeetingResponse(Status):
+    meetList: List[UserMeetingInfo] = []

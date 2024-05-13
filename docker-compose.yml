@@ -44,7 +44,7 @@ services:
     - ./conf/my.cnf:/etc/mysql/conf.d/my.cnf:ro
     environment:
     - "MYSQL_ROOT_PASSWORD=123456" # change it when deploying
-    - "MYSQL_DATABASE=test-recruit" # change it when deploying
+    - "MYSQL_DATABASE=test1" # change it when deploying
     - "TZ=Asia/Shanghai"
     networks:
     - platform

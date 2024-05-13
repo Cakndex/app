@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -30,3 +32,18 @@ class CheckInfo(BaseModel):
     checkReason: str = ""
     isPassed: int = -1
     number: int = 0
+
+
+class UserMeetInfo(BaseModel):
+    meetingId: int = 0
+    name: str = ""
+    isCaptured: bool = False
+
+
+class UserMeetingInfo(BaseModel):
+    meetingId: int = 0
+    meeting_name: str = ""
+    description: str = ""
+    startTime: datetime
+    endTime: datetime
+    username: list = []

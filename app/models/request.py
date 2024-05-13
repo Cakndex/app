@@ -2,6 +2,7 @@
 请求模型
 """
 
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -52,3 +53,10 @@ class CheckRequest(BaseModel):
     CapturedId: int = 0
     isCheck: bool = False
     reason: str = ""
+
+
+class MeetingApplyRequest(BaseModel):
+    StartTime: datetime
+    EndTime: datetime
+    number: int = 0
+    summary: str = ""

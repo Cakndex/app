@@ -1,14 +1,13 @@
-"""数据库实例化
-"""
+"""数据库实例化"""
+
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
 
 from app.constants import WAITING
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime
-
 from app.database.db import Base
 
 
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     userId = Column(Integer, primary_key=True, autoincrement=True, index=True)
     # user might log in via either username or email
@@ -18,13 +17,11 @@ class User(Base):
     banned = Column(Boolean, nullable=False, default=False)  # is banned
     telephone = Column(String(16), nullable=False)
 
-    __table_args__ = {
-        "mysql_charset": "utf8mb4"
-    }
+    __table_args__ = {"mysql_charset": "utf8mb4"}
 
 
 class Meeting(Base):
-    __tablename__ = 'meetings'
+    __tablename__ = "meetings"
 
     meetingId = Column(Integer, primary_key=True, autoincrement=True, index=True)
     name = Column(String(64), nullable=False)
@@ -32,29 +29,25 @@ class Meeting(Base):
     # 设施，如投影仪，白板，麦克风等
     facility = Column(String(256), nullable=False)
 
-    __table_args__ = {
-        "mysql_charset": "utf8mb4"
-    }
+    __table_args__ = {"mysql_charset": "utf8mb4"}
 
 
 class IsCaptured(Base):
-    __tablename__ = 'is_captured'
+    """会议室预约记录"""
+
+    __tablename__ = "is_captured"
 
     CapturedId = Column(Integer, primary_key=True, autoincrement=True, index=True)
     userId = Column(Integer, nullable=False, index=True)
     meetingId = Column(Integer, nullable=False, index=True)
     StartTime = Column(DateTime, nullable=False)
     EndTime = Column(DateTime, nullable=False)
-    # 参会人员
-    participants = Column(Text(), nullable=False)
     # 人数
     number = Column(Integer, nullable=False)
     # 审核
-    isPass = Column(Integer, nullable=False, default=WAITING)
+    isPass = Column(Boolean, nullable=False, default=WAITING)
     reason = Column(String(256), nullable=False, default=" ")
     # 简介
     summary = Column(Text(), nullable=False)
 
-    __table_args__ = {
-        "mysql_charset": "utf8mb4"
-    }
+    __table_args__ = {"mysql_charset": "utf8mb4"}
