@@ -175,10 +175,10 @@ async def apply_meeting(
 
 
 @meetRouter.get("/{meetid}", dependencies=[AuthedUser(admin=False)])
-async def meeting_info(response: Response, *, meetingId: int = Path()):
+async def meeting_info(response: Response, *, meetId: int = Path()):
     """获取会议室信息"""
     with SessionLocal() as sess:
-        room = sess.query(Meeting).filter_by(meetingId=meetingId).first()
+        room = sess.query(Meeting).filter_by(meetingId=meetId).first()
     if room is None:
         return return_status(Error.MeetingNotExist, response)
     return room
