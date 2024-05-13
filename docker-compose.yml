@@ -55,7 +55,3 @@ volumes:
 networks:
   meet:
     driver: bridge
-    ipam:
-      driver: default
-      config:
-      - subnet: 172.20.21.0/24
