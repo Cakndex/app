@@ -60,3 +60,9 @@ class MeetingApplyRequest(BaseModel):
     EndTime: datetime
     number: int = 0
     summary: str = ""
+
+
+class ZhaoJiaData(BaseModel):
+    WenDu: float
+    ShiDu: float
+    YanWu: int

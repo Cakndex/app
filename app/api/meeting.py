@@ -8,7 +8,12 @@ from app.data import common as common_data
 from app.database.db import SessionLocal, redis_db
 from app.database.db_models import IsCaptured, Meeting, User
 from app.depends import AuthedUser
-from app.models.request import CheckRequest, MeetingAddRequest, MeetingApplyRequest
+from app.models.request import (
+    CheckRequest,
+    MeetingAddRequest,
+    MeetingApplyRequest,
+    ZhaoJiaData,
+)
 from app.models.response import (
     CheckResponse,
     CreateCheckResponse,
@@ -276,3 +281,26 @@ async def meetings_list(response: Response):
     return return_response(
         UserMeetResponse(meetList=m_li, status=Error.NoError), response
     )
+
+
+@meetRouter.post("/zaojia")
+async def zao_jia(response: Response, request: ZhaoJiaData = Body()):
+    """向redis中写入数据"""
+    try:
+        redis_db.set("shidu", request.ShiDu)
+        redis_db.set("wendu", request.WenDu)
+        redis_db.set("YanWu", request.YanWu)
+    except Exception:
+        return return_status(Error.RedisError, response)
+    return return_status(Error.NoError, response)
+
+
+@meetRouter.get("/zaojia/data", response_model=ZhaoJiaData)
+async def get_data(response: Response):
+    try:
+        shidu = redis_db.get("shidu")
+        wendu = redis_db.get("wendu")
+        yanwu = redis_db.get("YanWu")
+    except Exception:
+        return return_status(Error.RedisError, response)
+    return ZhaoJiaData(WenDu=wendu, ShiDu=shidu, YanWu=yanwu)
