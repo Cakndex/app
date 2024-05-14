@@ -214,25 +214,29 @@ async def join_meeting(
 async def meetings_info(response: Response, *, user: User = AuthedUser(admin=False)):
     """获取该会议信息"""
     with SessionLocal() as sess:
-        sql = text("select * from is_captured where userId=:id")
-        captures = sess.execute(sql, dict(id=user.userId)).fetchall()
+        sql = text("select * from is_captured")
+        captures = sess.execute(sql).fetchall()
     if captures == []:
         return return_status(Error.RecordNotFound, response)
     meet_list = []
     for capture in captures:
         with SessionLocal() as sess:
             room = sess.query(Meeting).filter_by(meetingId=capture.meetingId).first()
-        meet_list.append(
-            UserMeetingInfo(
-                meetId=capture.CapturedId,
-                meeting_name=room.name,
-                reason=capture.reason,
-                startTime=capture.StartTime,
-                endTime=capture.EndTime,
-                username=list(redis_db.smembers(f"meeting:{capture.CapturedId}")),
-                is_passed=capture.isPass,
+        user_list = list(redis_db.smembers(f"meeting:{capture.CapturedId}"))
+        if user.username not in user_list:
+            continue
+        else:
+            meet_list.append(
+                UserMeetingInfo(
+                    meetId=capture.CapturedId,
+                    meeting_name=room.name,
+                    reason=capture.reason,
+                    startTime=capture.StartTime,
+                    endTime=capture.EndTime,
+                    username=user_list,
+                    is_passed=capture.isPass,
+                )
             )
-        )
     return return_response(
         UserMeetingResponse(meetList=meet_list, status=Error.NoError), response
     )
